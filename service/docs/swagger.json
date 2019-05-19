@@ -18,19 +18,89 @@
     "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
-        "/ping": {
-            "get": {
-                "description": "Receive a Ping request and send a Pong response",
+        "/messages": {
+            "post": {
+                "description": "Create Message in database",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Simple Ping/Pong protocol",
+                "summary": "Create Message",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.PingResponse"
+                            "$ref": "#/definitions/controller.CreateMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Register User in database",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Register User",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.RegisterResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/rooms": {
+            "get": {
+                "description": "List Rooms in database",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List Rooms",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.ListRoomResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create Room in database",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create Room",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.CreateRoomResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/rooms/": {
+            "get": {
+                "description": "List last Room Messages in database",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List Room Messages",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.ListMessageResponse"
                         }
                     }
                 }
@@ -38,10 +108,112 @@
         }
     },
     "definitions": {
-        "controller.PingResponse": {
+        "controller.CreateMessageResponse": {
             "type": "object",
             "properties": {
-                "message": {
+                "id": {
+                    "type": "integer"
+                },
+                "room_id": {
+                    "type": "integer"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.CreateRoomResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.GetRoomResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.ListMessageResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.MessageView"
+                    }
+                }
+            }
+        },
+        "controller.ListRoomResponse": {
+            "type": "object",
+            "properties": {
+                "rooms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.RoomView"
+                    }
+                }
+            }
+        },
+        "controller.MessageView": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "room_id": {
+                    "type": "integer"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.RegisterResponse": {
+            "type": "object",
+            "required": [
+                "email",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.RoomView": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
                     "type": "string"
                 }
             }

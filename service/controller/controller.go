@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -19,13 +20,6 @@ func NewController() *Controller {
 
 type PingResponse struct {
 	Message string `json:"message"`
-}
-
-type UserView struct {
-	Username  string `json:"username" binding:"required"`
-	Email     string `json:"email" binding:"required"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
 }
 
 type RoomView struct {
@@ -62,17 +56,7 @@ type ListMessageResponse struct {
 	Messages []MessageView `json:"messages"`
 }
 
-// Ping godoc
-// @Summary Simple Ping/Pong protocol
-// @Description Receive a Ping request and send a Pong response
-// @Produce  json
-// @Success 200 {object} controller.PingResponse
-// @Router /ping [get]
-func (c *Controller) Ping(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, PingResponse{Message: "pong"})
-}
-
-// Register User
+// Register godoc
 // @Summary Register User
 // @Description Register User in database
 // @Produce  json
@@ -112,7 +96,7 @@ func (c *Controller) Register(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
-// List Rooms
+// ListRooms godoc
 // @Summary List Rooms
 // @Description List Rooms in database
 // @Produce  json
@@ -142,7 +126,7 @@ func (c *Controller) ListRooms(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
-// CreateRoom
+// CreateRoom godoc
 // @Summary Create Room
 // @Description Create Room in database
 // @Produce  json
@@ -176,7 +160,7 @@ func (c *Controller) CreateRoom(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
-// GetRoom
+// GetRoom godoc
 // @Summary Get Room
 // @Description Get Room by ID
 // @Produce  json
@@ -211,21 +195,19 @@ type MessageView struct {
 }
 
 type CreateMessageRequest struct {
-	Text   string `json:"text"`
-	UserID uint   `json:"user_id"`
-	RoomID uint   `json:"room_id"`
+	Text string `json:"text"`
 }
 
 type CreateMessageResponse struct {
 	MessageView
 }
 
-// CreateMessage
+// CreateMessage godoc
 // @Summary Create Message
 // @Description Create Message in database
 // @Produce  json
 // @Success 200 {object} controller.CreateMessageResponse
-// @Router /messages [post]
+// @Router /rooms/:id/messages [post]
 func (c *Controller) CreateMessage(ctx *gin.Context) {
 	var json CreateMessageRequest
 	if err := ctx.ShouldBindJSON(&json); err != nil {
@@ -235,10 +217,20 @@ func (c *Controller) CreateMessage(ctx *gin.Context) {
 
 	db := models.GetDB()
 
+	userView, _ := ctx.Get("username")
+
+	id := ctx.Params.ByName("id")
+	uid, _ := strconv.Atoi(id)
+	var user models.User
+	if err := db.Where("username = ?", userView.(*UserView).Username).Find(&user).Error; err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	message := &models.Message{
 		Text:   json.Text,
-		RoomID: json.RoomID,
-		UserID: json.UserID,
+		RoomID: uint(uid),
+		UserID: user.ID,
 	}
 
 	if err := db.Create(message).Error; err != nil {
@@ -258,7 +250,7 @@ func (c *Controller) CreateMessage(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
-// List Room Messages
+// ListRoomMessages godoc
 // @Summary List Room Messages
 // @Description List last Room Messages in database
 // @Produce  json

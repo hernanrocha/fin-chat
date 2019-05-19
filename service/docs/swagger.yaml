@@ -1,8 +1,74 @@
 basePath: /api/v1
 definitions:
-  controller.PingResponse:
+  controller.CreateMessageResponse:
     properties:
-      message:
+      id:
+        type: integer
+      room_id:
+        type: integer
+      text:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  controller.CreateRoomResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controller.GetRoomResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controller.ListMessageResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/controller.MessageView'
+        type: array
+    type: object
+  controller.ListRoomResponse:
+    properties:
+      rooms:
+        items:
+          $ref: '#/definitions/controller.RoomView'
+        type: array
+    type: object
+  controller.MessageView:
+    properties:
+      id:
+        type: integer
+      room_id:
+        type: integer
+      text:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  controller.RegisterResponse:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - username
+    type: object
+  controller.RoomView:
+    properties:
+      id:
+        type: integer
+      name:
         type: string
     type: object
 host: localhost:8080
@@ -19,16 +85,63 @@ info:
   title: Swagger Example API
   version: "1.0"
 paths:
-  /ping:
-    get:
-      description: Receive a Ping request and send a Pong response
+  /messages:
+    post:
+      description: Create Message in database
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.PingResponse'
+            $ref: '#/definitions/controller.CreateMessageResponse'
             type: object
-      summary: Simple Ping/Pong protocol
+      summary: Create Message
+  /register:
+    post:
+      description: Register User in database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.RegisterResponse'
+            type: object
+      summary: Register User
+  /rooms:
+    get:
+      description: List Rooms in database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.ListRoomResponse'
+            type: object
+      summary: List Rooms
+    post:
+      description: Create Room in database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.CreateRoomResponse'
+            type: object
+      summary: Create Room
+  /rooms/:
+    get:
+      description: List last Room Messages in database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.ListMessageResponse'
+            type: object
+      summary: List Room Messages
 swagger: "2.0"
