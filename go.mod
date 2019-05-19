@@ -7,7 +7,9 @@ require (
 	github.com/appleboy/gin-jwt v0.0.0-20190409072159-633d983b91f0
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.4.0
+	github.com/gorilla/websocket v1.4.0
 	github.com/jinzhu/gorm v1.9.8
+	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
 	github.com/swaggo/gin-swagger v1.1.0
 	github.com/swaggo/swag v1.4.0
 	github.com/tidwall/gjson v1.2.1 // indirect

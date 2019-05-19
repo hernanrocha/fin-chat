@@ -9,4 +9,6 @@ type Message struct {
 	Text   string
 	UserID uint
 	RoomID uint
+
+	User *User
 }

@@ -3,17 +3,21 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/streadway/amqp"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
+	"github.com/hernanrocha/fin-chat/rabbit"
 	"github.com/hernanrocha/fin-chat/service/controller"
 	_ "github.com/hernanrocha/fin-chat/service/docs"
 	"github.com/hernanrocha/fin-chat/service/models"
@@ -24,11 +28,19 @@ func setupRouter() *gin.Engine {
 	// Default Engine with Logger and
 	r := gin.Default()
 
+	// Run Chat Hub
+	hub := controller.NewHub()
+	go hub.Run()
+
 	// Controller
-	c := controller.NewController()
+	c := controller.NewController(hub)
 
 	// CORS
-	r.Use(cors.Default())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowCredentials = true
+	r.Use(cors.New(corsConfig))
 
 	// Auth JWT
 	authMiddleware, _ := jwtMiddleware()
@@ -50,6 +62,10 @@ func setupRouter() *gin.Engine {
 		v1.GET("/rooms/:id/messages", c.ListRoomMessages)
 		v1.POST("/rooms/:id/messages", c.CreateMessage)
 	}
+
+	r.GET("/ws", func(c *gin.Context) {
+		wshandler(c.Writer, c.Request, hub)
+	})
 
 	// Swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -124,6 +140,39 @@ func jwtMiddleware() (*jwt.GinJWTMiddleware, error) {
 	return authMiddleware, nil
 }
 
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+	}
+}
+
+var wsupgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
+}
+
+func wshandler(w http.ResponseWriter, r *http.Request, h *controller.Hub) {
+	fmt.Println("NEW WEBSOCKET")
+	conn, err := wsupgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println("Failed to set websocket upgrade: ", err)
+		return
+	}
+
+	h.AddClientChan <- conn
+
+	for {
+		t, msg, err := conn.ReadMessage()
+		if err != nil {
+			h.RemoveClientChan <- conn
+			return
+		}
+		fmt.Println("New message..." + string(msg))
+		conn.WriteMessage(t, msg)
+	}
+}
+
 // @title Swagger Example API
 // @version 1.0
 // @description This is a sample server celler server.
@@ -144,16 +193,30 @@ func main() {
 
 	os.Setenv("PORT", "8001")
 
-	// Setup database
+	// Setup Postgres database
 	db, err := gorm.Open("postgres", "host=localhost port=15432 user=postgres password=postgres dbname=finchat sslmode=disable")
-	if err != nil {
-		panic(fmt.Sprintf("Error conecting to database: %s", err))
-	}
+	failOnError(err, "Error conecting to database")
 	defer db.Close()
 
+	// Run migration
 	models.Setup(db)
 
-	r := setupRouter()
+	// Setup RabbitMQ
+	conn, err := amqp.Dial("amqp://rabbitmq:rabbitmq@localhost:5672/")
+	failOnError(err, "Failed to connect to RabbitMQ")
+	defer conn.Close()
 
+	ch, err := conn.Channel()
+	failOnError(err, "Failed to open a channel")
+	defer ch.Close()
+
+	rb := rabbit.NewRabbitChannel(ch)
+	err = rb.QueueDeclare()
+	failOnError(err, "Failed to declare a queue")
+
+	rb.Publish("FB")
+
+	// Setup router
+	r := setupRouter()
 	r.Run() // listen and serve on 0.0.0.0:8080
 }

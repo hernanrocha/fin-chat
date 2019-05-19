@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -11,15 +13,14 @@ import (
 
 // Controller example
 type Controller struct {
+	hub *Hub
 }
 
 // NewController example
-func NewController() *Controller {
-	return &Controller{}
-}
-
-type PingResponse struct {
-	Message string `json:"message"`
+func NewController(hub *Hub) *Controller {
+	return &Controller{
+		hub: hub,
+	}
 }
 
 type RoomView struct {
@@ -188,10 +189,11 @@ func (c *Controller) GetRoom(ctx *gin.Context) {
 }
 
 type MessageView struct {
-	ID     uint   `json:"id"`
-	Text   string `json:"text"`
-	UserID uint   `json:"user_id"`
-	RoomID uint   `json:"room_id"`
+	ID        uint      `json:"id"`
+	Text      string    `json:"text"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"created_at"`
+	RoomID    uint      `json:"room_id"`
 }
 
 type CreateMessageRequest struct {
@@ -238,13 +240,19 @@ func (c *Controller) CreateMessage(ctx *gin.Context) {
 		return
 	}
 
+	mv := MessageView{
+		ID:        message.ID,
+		Text:      message.Text,
+		RoomID:    message.RoomID,
+		Username:  user.Username,
+		CreatedAt: message.CreatedAt,
+	}
+
+	fmt.Println("Broadcasting...")
+	c.hub.BroadcastChan <- mv
+
 	response := &CreateMessageResponse{
-		MessageView{
-			ID:     message.ID,
-			Text:   message.Text,
-			RoomID: message.RoomID,
-			UserID: message.UserID,
-		},
+		MessageView: mv,
 	}
 
 	ctx.JSON(http.StatusOK, response)
@@ -262,7 +270,8 @@ func (c *Controller) ListRoomMessages(ctx *gin.Context) {
 	var messages []models.Message
 	id := ctx.Params.ByName("id")
 
-	if err := db.Where("room_id = ?", id).Limit(50).Order("created_at asc").Find(&messages).Error; err != nil {
+	db = db.Where("room_id = ?", id).Preload("User").Limit(50).Order("created_at asc").Find(&messages)
+	if err := db.Error; err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -270,10 +279,11 @@ func (c *Controller) ListRoomMessages(ctx *gin.Context) {
 	messageList := make([]MessageView, len(messages))
 	for i, m := range messages {
 		messageList[i] = MessageView{
-			ID:     m.ID,
-			Text:   m.Text,
-			UserID: m.UserID,
-			RoomID: m.RoomID,
+			ID:        m.ID,
+			Text:      m.Text,
+			RoomID:    m.RoomID,
+			Username:  m.User.Username,
+			CreatedAt: m.CreatedAt,
 		}
 	}
 
