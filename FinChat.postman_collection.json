@@ -1,0 +1,152 @@
+{
+	"variables": [],
+	"info": {
+		"name": "FinChat",
+		"_postman_id": "a6465464-8258-9d1a-3fbf-84af86c2e764",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"request": {
+				"url": "localhost:8001/register",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\": \"hernanrocha2\",\n\t\"email\": \"hernan@gmail.com\",\n\t\"password\": \"password\",\n\t\"first_name\": \"Hernan\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"url": "localhost:8001/login",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\": \"hernanrocha\",\n\t\"password\": \"passwo\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "List Rooms",
+			"request": {
+				"url": "http://localhost:8001/api/v1/rooms",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NTgyNzczMTgsIm9yaWdfaWF0IjoxNTU4MjczNzE4LCJ1c2VybmFtZSI6Imhlcm5hbnJvY2hhIn0.ILyDVzzJa4JAJvLc9boxvr4y3aTsoEpA7re3CbXBqq0",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Get Room by ID",
+			"request": {
+				"url": "http://localhost:8001/api/v1/rooms/5",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NTgyNzczMTgsIm9yaWdfaWF0IjoxNTU4MjczNzE4LCJ1c2VybmFtZSI6Imhlcm5hbnJvY2hhIn0.ILyDVzzJa4JAJvLc9boxvr4y3aTsoEpA7re3CbXBqq0",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Get Messages by Room",
+			"request": {
+				"url": "http://localhost:8001/api/v1/rooms/2/messages",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NTgyNzczMTgsIm9yaWdfaWF0IjoxNTU4MjczNzE4LCJ1c2VybmFtZSI6Imhlcm5hbnJvY2hhIn0.ILyDVzzJa4JAJvLc9boxvr4y3aTsoEpA7re3CbXBqq0",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Create Room",
+			"request": {
+				"url": "localhost:8001/api/v1/rooms",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NTgyNzczMTgsIm9yaWdfaWF0IjoxNTU4MjczNzE4LCJ1c2VybmFtZSI6Imhlcm5hbnJvY2hhIn0.ILyDVzzJa4JAJvLc9boxvr4y3aTsoEpA7re3CbXBqq0",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Mesa 22\"\n}\t"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Create Message",
+			"request": {
+				"url": "localhost:8001/api/v1/rooms/2/messages",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NTgzMDI2NzUsIm9yaWdfaWF0IjoxNTU4Mjk5MDc1LCJ1c2VybmFtZSI6Imhlcm5hbnJvY2hhIn0.nRx1P4lRNeyxdUaCAL21FafPvbnVjRvfRIf_F8f4KmM",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"text\": \"/stock=FB\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}

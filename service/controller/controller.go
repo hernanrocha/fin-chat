@@ -4,22 +4,26 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/hernanrocha/fin-chat/rabbit"
 	"github.com/hernanrocha/fin-chat/service/models"
 )
 
 // Controller example
 type Controller struct {
 	hub *Hub
+	rb  rabbit.RabbitChannel
 }
 
 // NewController example
-func NewController(hub *Hub) *Controller {
+func NewController(hub *Hub, rb rabbit.RabbitChannel) *Controller {
 	return &Controller{
 		hub: hub,
+		rb:  rb,
 	}
 }
 
@@ -60,6 +64,8 @@ type ListMessageResponse struct {
 // Register godoc
 // @Summary Register User
 // @Description Register User in database
+// @Tags Authentication
+// @Param user body controller.RegisterRequest true "User Data"
 // @Produce  json
 // @Success 200 {object} controller.RegisterResponse
 // @Router /register [post]
@@ -100,9 +106,11 @@ func (c *Controller) Register(ctx *gin.Context) {
 // ListRooms godoc
 // @Summary List Rooms
 // @Description List Rooms in database
+// @Tags Rooms
+// @Param Authorization header string true "JWT Token"
 // @Produce  json
 // @Success 200 {object} controller.ListRoomResponse
-// @Router /rooms [get]
+// @Router /api/v1/rooms [get]
 func (c *Controller) ListRooms(ctx *gin.Context) {
 	db := models.GetDB()
 
@@ -130,9 +138,12 @@ func (c *Controller) ListRooms(ctx *gin.Context) {
 // CreateRoom godoc
 // @Summary Create Room
 // @Description Create Room in database
+// @Tags Rooms
+// @Param Authorization header string true "JWT Token"
+// @Param user body controller.CreateRoomRequest true "Room Data"
 // @Produce  json
 // @Success 200 {object} controller.CreateRoomResponse
-// @Router /rooms [post]
+// @Router /api/v1/rooms [post]
 func (c *Controller) CreateRoom(ctx *gin.Context) {
 	var json CreateRoomRequest
 	if err := ctx.ShouldBindJSON(&json); err != nil {
@@ -164,9 +175,12 @@ func (c *Controller) CreateRoom(ctx *gin.Context) {
 // GetRoom godoc
 // @Summary Get Room
 // @Description Get Room by ID
+// @Tags Rooms
+// @Param Authorization header string true "JWT Token"
+// @Param id path int true "Room ID"
 // @Produce  json
 // @Success 200 {object} controller.GetRoomResponse
-// @Router /rooms/:id [get]
+// @Router /api/v1/rooms/{id} [get]
 func (c *Controller) GetRoom(ctx *gin.Context) {
 	db := models.GetDB()
 
@@ -207,9 +221,13 @@ type CreateMessageResponse struct {
 // CreateMessage godoc
 // @Summary Create Message
 // @Description Create Message in database
+// @Tags Messages
+// @Param Authorization header string true "JWT Token"
+// @Param id path int true "Room ID"
+// @Param user body controller.CreateMessageRequest true "Message Data"
 // @Produce  json
 // @Success 200 {object} controller.CreateMessageResponse
-// @Router /rooms/:id/messages [post]
+// @Router /api/v1/rooms/{id}/messages [post]
 func (c *Controller) CreateMessage(ctx *gin.Context) {
 	var json CreateMessageRequest
 	if err := ctx.ShouldBindJSON(&json); err != nil {
@@ -248,8 +266,13 @@ func (c *Controller) CreateMessage(ctx *gin.Context) {
 		CreatedAt: message.CreatedAt,
 	}
 
-	fmt.Println("Broadcasting...")
+	fmt.Println("Broadcasting message to users...")
 	c.hub.BroadcastChan <- mv
+
+	if strings.HasPrefix(message.Text, "/stock=") {
+		fmt.Println("Sending message to bot...")
+		c.rb.Publish(strconv.Itoa(int(message.RoomID)), message.Text[7:])
+	}
 
 	response := &CreateMessageResponse{
 		MessageView: mv,
@@ -261,16 +284,19 @@ func (c *Controller) CreateMessage(ctx *gin.Context) {
 // ListRoomMessages godoc
 // @Summary List Room Messages
 // @Description List last Room Messages in database
+// @Tags Messages
+// @Param Authorization header string true "JWT Token"
+// @Param id path int true "Room ID"
 // @Produce  json
 // @Success 200 {object} controller.ListMessageResponse
-// @Router /rooms/:id/messages [get]
+// @Router /api/v1/rooms/{id}/messages [get]
 func (c *Controller) ListRoomMessages(ctx *gin.Context) {
 	db := models.GetDB()
 
 	var messages []models.Message
 	id := ctx.Params.ByName("id")
 
-	db = db.Where("room_id = ?", id).Preload("User").Limit(50).Order("created_at asc").Find(&messages)
+	db = db.Where("room_id = ?", id).Preload("User").Limit(50).Order("created_at desc").Find(&messages)
 	if err := db.Error; err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

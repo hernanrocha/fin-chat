@@ -28,3 +28,30 @@ services:
     restart: always
     ports:
       - 18080:8080
+
+  goserver:
+    build:
+      context: "."
+      dockerfile: "Dockerfile.web"
+    depends_on:
+      - rabbit1
+      - db
+    environment:
+      - RABBIT_CONNECTION=amqp://rabbitmq:rabbitmq@rabbit1:5672/
+      - DB_CONNECTION=host=db port=5432 user=postgres password=postgres dbname=finchat sslmode=disable
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "8001:8001"
+
+  gobot:
+    build:
+      context: "."
+      dockerfile: "Dockerfile.bot"
+    environment:
+      - RABBIT_CONNECTION=amqp://rabbitmq:rabbitmq@rabbit1:5672/
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - rabbit1
+    

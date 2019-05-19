@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/hernanrocha/fin-chat/rabbit"
 	"github.com/streadway/amqp"
@@ -15,6 +16,13 @@ func failOnError(err error, msg string) {
 	if err != nil {
 		log.Fatalf("%s: %s", msg, err)
 	}
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
 
 func Process(s string) (string, error) {
@@ -34,7 +42,8 @@ func Process(s string) (string, error) {
 }
 
 func main() {
-	conn, err := amqp.Dial("amqp://rabbitmq:rabbitmq@localhost:5672/")
+	rabbconn := getEnv("RABBIT_CONNECTION", "amqp://rabbitmq:rabbitmq@localhost:5672/")
+	conn, err := amqp.Dial(rabbconn)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -46,14 +55,6 @@ func main() {
 	err = rb.QueueDeclare()
 	failOnError(err, "Failed to declare a queue")
 
-	msgs, err := rb.Consume()
-	failOnError(err, "Failed to register a consumer")
-
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-
-	for d := range msgs {
-		log.Printf("Received a message: %s", d.Body)
-		str, _ := Process(string(d.Body))
-		fmt.Println(str)
-	}
+	fmt.Println("Starting to process messages")
+	rb.Handle(Process)
 }

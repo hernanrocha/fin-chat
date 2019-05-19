@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt"
@@ -23,7 +24,7 @@ import (
 	"github.com/hernanrocha/fin-chat/service/models"
 )
 
-func setupRouter() *gin.Engine {
+func setupRouter(rb rabbit.RabbitChannel) *gin.Engine {
 
 	// Default Engine with Logger and
 	r := gin.Default()
@@ -32,8 +33,11 @@ func setupRouter() *gin.Engine {
 	hub := controller.NewHub()
 	go hub.Run()
 
+	// Run Bot Consumer
+	go handleRabbitResponse(rb, hub)
+
 	// Controller
-	c := controller.NewController(hub)
+	c := controller.NewController(hub, rb)
 
 	// CORS
 	corsConfig := cors.DefaultConfig()
@@ -71,6 +75,61 @@ func setupRouter() *gin.Engine {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
+}
+
+func handleRabbitResponse(rb rabbit.RabbitChannel, hub *controller.Hub) {
+	db := models.GetDB()
+
+	user := models.User{
+		Username: "Bot",
+		Email:    "bot@mail.com",
+	}
+	if err := db.Where("username = ?", "Bot").First(&user).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			fmt.Println("Creating bot user")
+			db.Create(&user)
+		}
+	}
+
+	msgs, err := rb.Consume()
+	if err != nil {
+		return
+	}
+
+	log.Printf("Waiting for messages from rabbit...")
+
+	for d := range msgs {
+		log.Printf("Received a message: %s", d.Body)
+		room, _ := strconv.Atoi(d.CorrelationId)
+		message := &models.Message{
+			Text:   string(d.Body),
+			RoomID: uint(room),
+			UserID: user.ID,
+		}
+
+		if err := db.Create(message).Error; err != nil {
+			log.Println("Error creating new message from bot: ", err)
+			continue
+		}
+
+		mv := controller.MessageView{
+			ID:        message.ID,
+			Text:      message.Text,
+			RoomID:    message.RoomID,
+			Username:  user.Username,
+			CreatedAt: message.CreatedAt,
+		}
+
+		fmt.Println("Broadcasting message...")
+		hub.BroadcastChan <- mv
+	}
+
+	/*
+		if err := db.Where("username = ?", userView.(*UserView).Username).Find(&user).Error; err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	*/
 }
 
 func jwtMiddleware() (*jwt.GinJWTMiddleware, error) {
@@ -146,6 +205,13 @@ func failOnError(err error, msg string) {
 	}
 }
 
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 var wsupgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -163,38 +229,34 @@ func wshandler(w http.ResponseWriter, r *http.Request, h *controller.Hub) {
 	h.AddClientChan <- conn
 
 	for {
-		t, msg, err := conn.ReadMessage()
+		_, _, err = conn.ReadMessage()
 		if err != nil {
 			h.RemoveClientChan <- conn
 			return
 		}
-		fmt.Println("New message..." + string(msg))
-		conn.WriteMessage(t, msg)
 	}
 }
 
-// @title Swagger Example API
+// @title Swagger FinChat API
 // @version 1.0
-// @description This is a sample server celler server.
-// @termsOfService http://swagger.io/terms/
+// @description This is a simple bot-based chat.
 
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @contact.name Hernan Rocha
+// @contact.email hernanrocha93(at)gmail.com
 
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8080
-// @BasePath /api/v1
+// @host localhost:8001
+// @BasePath /
 
 func main() {
-	fmt.Println("Hello World!")
-
+	fmt.Println("Starting web server...")
 	os.Setenv("PORT", "8001")
 
 	// Setup Postgres database
-	db, err := gorm.Open("postgres", "host=localhost port=15432 user=postgres password=postgres dbname=finchat sslmode=disable")
+	dbconn := getEnv("DB_CONNECTION", "host=localhost port=15432 user=postgres password=postgres dbname=finchat sslmode=disable")
+	db, err := gorm.Open("postgres", dbconn)
 	failOnError(err, "Error conecting to database")
 	defer db.Close()
 
@@ -202,7 +264,8 @@ func main() {
 	models.Setup(db)
 
 	// Setup RabbitMQ
-	conn, err := amqp.Dial("amqp://rabbitmq:rabbitmq@localhost:5672/")
+	rabbitconn := getEnv("RABBIT_CONNECTION", "amqp://rabbitmq:rabbitmq@localhost:5672/")
+	conn, err := amqp.Dial(rabbitconn)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -214,9 +277,7 @@ func main() {
 	err = rb.QueueDeclare()
 	failOnError(err, "Failed to declare a queue")
 
-	rb.Publish("FB")
-
 	// Setup router
-	r := setupRouter()
-	r.Run() // listen and serve on 0.0.0.0:8080
+	r := setupRouter(rb)
+	r.Run() // listen and serve on 0.0.0.0:8001
 }

@@ -1,15 +1,27 @@
-basePath: /api/v1
+basePath: /
 definitions:
+  controller.CreateMessageRequest:
+    properties:
+      text:
+        type: string
+    type: object
   controller.CreateMessageResponse:
     properties:
+      created_at:
+        type: string
       id:
         type: integer
       room_id:
         type: integer
       text:
         type: string
-      user_id:
-        type: integer
+      username:
+        type: string
+    type: object
+  controller.CreateRoomRequest:
+    properties:
+      name:
+        type: string
     type: object
   controller.CreateRoomResponse:
     properties:
@@ -39,16 +51,54 @@ definitions:
           $ref: '#/definitions/controller.RoomView'
         type: array
     type: object
+  controller.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  controller.LoginResponse:
+    properties:
+      code:
+        type: integer
+      expire:
+        type: string
+      token:
+        type: string
+    type: object
   controller.MessageView:
     properties:
+      created_at:
+        type: string
       id:
         type: integer
       room_id:
         type: integer
       text:
         type: string
-      user_id:
-        type: integer
+      username:
+        type: string
+    type: object
+  controller.RegisterRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
     type: object
   controller.RegisterResponse:
     properties:
@@ -71,47 +121,27 @@ definitions:
       name:
         type: string
     type: object
-host: localhost:8080
+host: localhost:8001
 info:
   contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: This is a sample server celler server.
+    email: hernanrocha93(at)gmail.com
+    name: Hernan Rocha
+  description: This is a simple bot-based chat.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Swagger Example API
+  title: Swagger FinChat API
   version: "1.0"
 paths:
-  /messages:
-    post:
-      description: Create Message in database
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/controller.CreateMessageResponse'
-            type: object
-      summary: Create Message
-  /register:
-    post:
-      description: Register User in database
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/controller.RegisterResponse'
-            type: object
-      summary: Register User
-  /rooms:
+  /api/v1/rooms:
     get:
       description: List Rooms in database
+      parameters:
+      - description: JWT Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -121,8 +151,23 @@ paths:
             $ref: '#/definitions/controller.ListRoomResponse'
             type: object
       summary: List Rooms
+      tags:
+      - Rooms
     post:
       description: Create Room in database
+      parameters:
+      - description: JWT Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Room Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.CreateRoomRequest'
+          type: object
       produces:
       - application/json
       responses:
@@ -132,9 +177,47 @@ paths:
             $ref: '#/definitions/controller.CreateRoomResponse'
             type: object
       summary: Create Room
-  /rooms/:
+      tags:
+      - Rooms
+  /api/v1/rooms/{id}:
+    get:
+      description: Get Room by ID
+      parameters:
+      - description: JWT Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Room ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.GetRoomResponse'
+            type: object
+      summary: Get Room
+      tags:
+      - Rooms
+  /api/v1/rooms/{id}/messages:
     get:
       description: List last Room Messages in database
+      parameters:
+      - description: JWT Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Room ID
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -144,4 +227,81 @@ paths:
             $ref: '#/definitions/controller.ListMessageResponse'
             type: object
       summary: List Room Messages
+      tags:
+      - Messages
+    post:
+      description: Create Message in database
+      parameters:
+      - description: JWT Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Room ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Message Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.CreateMessageRequest'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.CreateMessageResponse'
+            type: object
+      summary: Create Message
+      tags:
+      - Messages
+  /login:
+    post:
+      description: Login with Username and Password
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/controller.LoginRequest'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.LoginResponse'
+            type: object
+      summary: Login
+      tags:
+      - Authentication
+  /register:
+    post:
+      description: Register User in database
+      parameters:
+      - description: User Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RegisterRequest'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.RegisterResponse'
+            type: object
+      summary: Register User
+      tags:
+      - Authentication
 swagger: "2.0"

@@ -1,13 +1,11 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server celler server.",
-        "title": "Swagger Example API",
-        "termsOfService": "http://swagger.io/terms/",
+        "description": "This is a simple bot-based chat.",
+        "title": "Swagger FinChat API",
         "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
+            "name": "Hernan Rocha",
+            "email": "hernanrocha93(at)gmail.com"
         },
         "license": {
             "name": "Apache 2.0",
@@ -15,52 +13,28 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
-    "basePath": "/api/v1",
+    "host": "localhost:8001",
+    "basePath": "/",
     "paths": {
-        "/messages": {
-            "post": {
-                "description": "Create Message in database",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Create Message",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "$ref": "#/definitions/controller.CreateMessageResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/register": {
-            "post": {
-                "description": "Register User in database",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Register User",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "$ref": "#/definitions/controller.RegisterResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/rooms": {
+        "/api/v1/rooms": {
             "get": {
                 "description": "List Rooms in database",
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "Rooms"
+                ],
                 "summary": "List Rooms",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -76,7 +50,29 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "Rooms"
+                ],
                 "summary": "Create Room",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Room Data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.CreateRoomRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -88,13 +84,69 @@
                 }
             }
         },
-        "/rooms/": {
+        "/api/v1/rooms/{id}": {
+            "get": {
+                "description": "Get Room by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Get Room",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Room ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.GetRoomResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/rooms/{id}/messages": {
             "get": {
                 "description": "List last Room Messages in database",
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "Messages"
+                ],
                 "summary": "List Room Messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Room ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -104,13 +156,135 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "description": "Create Message in database",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Create Message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Room ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Message Data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.CreateMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.CreateMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Login with Username and Password",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Login Credentials",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.LoginResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Register User in database",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register User",
+                "parameters": [
+                    {
+                        "description": "User Data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/controller.RegisterResponse"
+                        }
+                    }
+                }
             }
         }
     },
     "definitions": {
+        "controller.CreateMessageRequest": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.CreateMessageResponse": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -120,8 +294,16 @@
                 "text": {
                     "type": "string"
                 },
-                "user_id": {
-                    "type": "integer"
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.CreateRoomRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -169,9 +351,41 @@
                 }
             }
         },
+        "controller.LoginRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "expire": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.MessageView": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -181,8 +395,33 @@
                 "text": {
                     "type": "string"
                 },
-                "user_id": {
-                    "type": "integer"
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },

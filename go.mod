@@ -9,6 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.4.0
 	github.com/gorilla/websocket v1.4.0
 	github.com/jinzhu/gorm v1.9.8
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
 	github.com/swaggo/gin-swagger v1.1.0
 	github.com/swaggo/swag v1.4.0
