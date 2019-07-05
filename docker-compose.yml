@@ -1,8 +1,8 @@
 version: '3'
 services:
-  rabbit1:
+  rabbit:
     image: "rabbitmq:3-management"
-    hostname: "rabbit1"
+    hostname: "rabbit"
     environment:
       RABBITMQ_DEFAULT_USER: "rabbitmq"
       RABBITMQ_DEFAULT_PASS: "rabbitmq"
@@ -10,8 +10,6 @@ services:
     ports:
       - "15672:15672"
       - "5672:5672"
-    labels:
-      NAME: "rabbitmq1"
   
   db:
     image: postgres
@@ -34,7 +32,7 @@ services:
       context: "."
       dockerfile: "Dockerfile.web"
     depends_on:
-      - rabbit1
+      - rabbit
       - db
     environment:
       - RABBIT_CONNECTION=amqp://rabbitmq:rabbitmq@rabbit1:5672/
@@ -53,5 +51,5 @@ services:
     volumes:
       - .:/usr/src/app
     depends_on:
-      - rabbit1
+      - rabbit
     
