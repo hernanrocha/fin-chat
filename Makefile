@@ -1,3 +1,7 @@
+build:
+	go build -o fin-chat-service service/main.go
+	go build -o fin-chat-bot bot/main.go
+
 runservice:
 	go run service/main.go
 
@@ -11,7 +15,7 @@ genswagger:
 test:
 	go test github.com/hernanrocha/fin-chat... --cover -count=1
 
-build:
+dockerbuild:
 	docker build -t fin-chat-web -f web-release.dockerfile .
 	docker build -t fin-chat-bot -f bot-release.dockerfile .
 
