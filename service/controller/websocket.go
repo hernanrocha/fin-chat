@@ -1,11 +1,14 @@
 package controller
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+
+	"github.com/hernanrocha/fin-chat/service/hub"
+	"github.com/hernanrocha/fin-chat/service/hub/handler"
 )
 
 var wsupgrader = websocket.Upgrader{
@@ -14,37 +17,35 @@ var wsupgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func wshandler(w http.ResponseWriter, r *http.Request, h *Hub) {
-	fmt.Println("NEW WEBSOCKET")
-	conn, err := wsupgrader.Upgrade(w, r, nil)
-	if err != nil {
-		fmt.Println("Failed to set websocket upgrade: ", err)
-		return
-	}
-
-	h.AddClientChan <- conn
-
-	for {
-		_, _, err = conn.ReadMessage()
-		if err != nil {
-			h.RemoveClientChan <- conn
-			return
-		}
-	}
-}
-
 // WebSocketController ...
 type WebSocketController struct {
-	hub *Hub
+	hub hub.HubInterface
 }
 
 // NewWebSocketController ...
-func NewWebSocketController(hub *Hub) *WebSocketController {
+func NewWebSocketController(hub hub.HubInterface) *WebSocketController {
 	return &WebSocketController{
 		hub: hub,
 	}
 }
 
 func (c *WebSocketController) WebSocket(ctx *gin.Context) {
-	wshandler(ctx.Writer, ctx.Request, c.hub)
+	log.Println("Creating new WebSocket")
+	conn, err := wsupgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+	if err != nil {
+		log.Printf("Failed to set websocket upgrade: %s\n", err)
+		return
+	}
+
+	handler := handler.NewWebSocketMessageHandler(conn)
+	c.hub.AddClient(handler)
+
+	for {
+		_, _, err = conn.ReadMessage()
+		if err != nil {
+			log.Println("ERROR ON WEBSOCKET: CLOSING...")
+			c.hub.RemoveClient(handler)
+			return
+		}
+	}
 }

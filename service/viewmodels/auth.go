@@ -17,3 +17,12 @@ type LoginResponse struct {
 	Expire string `json:"expire"`
 	Token  string `json:"token"`
 }
+
+type RegisterRequest struct {
+	UserView
+	Password string `json:"password" binding:"required"`
+}
+
+type RegisterResponse struct {
+	UserView
+}

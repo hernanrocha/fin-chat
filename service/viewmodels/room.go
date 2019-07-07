@@ -5,21 +5,12 @@ type RoomView struct {
 	Name string `json:"name"`
 }
 
-type RegisterRequest struct {
-	UserView
-	Password string `json:"password" binding:"required"`
-}
-
-type RegisterResponse struct {
-	UserView
-}
-
 type ListRoomResponse struct {
 	Rooms []RoomView `json:"rooms"`
 }
 
 type CreateRoomRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" binding:"required"`
 }
 
 type CreateRoomResponse struct {
@@ -28,8 +19,4 @@ type CreateRoomResponse struct {
 
 type GetRoomResponse struct {
 	RoomView
-}
-
-type ListMessageResponse struct {
-	Messages []MessageView `json:"messages"`
 }

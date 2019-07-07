@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -113,7 +112,7 @@ func (c *AuthController) JWTMiddleware() (*jwt.GinJWTMiddleware, error) {
 			return jwt.MapClaims{}
 		},
 		IdentityHandler: func(c *gin.Context) interface{} {
-			fmt.Println("IdentityHandler")
+			log.Println("IdentityHandler")
 			claims := jwt.ExtractClaims(c)
 			return &viewmodels.UserView{
 				Username: claims["username"].(string),

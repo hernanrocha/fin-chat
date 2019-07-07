@@ -1,13 +1,11 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hernanrocha/fin-chat/rabbit"
+	"github.com/hernanrocha/fin-chat/service/hub"
 	"github.com/hernanrocha/fin-chat/service/models"
 	"github.com/hernanrocha/fin-chat/service/viewmodels"
 	"github.com/jinzhu/gorm"
@@ -15,16 +13,14 @@ import (
 
 // MessageController ...
 type MessageController struct {
-	hub *Hub
-	rb  rabbit.RabbitChannel
+	hub hub.HubInterface
 	db  *gorm.DB
 }
 
 // NewMessageController ...
-func NewMessageController(hub *Hub, rb rabbit.RabbitChannel) *MessageController {
+func NewMessageController(hub hub.HubInterface) *MessageController {
 	return &MessageController{
 		hub: hub,
-		rb:  rb,
 		db:  models.GetDB(),
 	}
 }
@@ -46,14 +42,11 @@ func (c *MessageController) CreateMessage(ctx *gin.Context) {
 		return
 	}
 
-	db := models.GetDB()
-
 	userView, _ := ctx.Get("username")
-
 	id := ctx.Params.ByName("id")
 	uid, _ := strconv.Atoi(id)
 	var user models.User
-	if err := db.Where("username = ?", userView.(*viewmodels.UserView).Username).Find(&user).Error; err != nil {
+	if err := c.db.Where("username = ?", userView.(*viewmodels.UserView).Username).Find(&user).Error; err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -64,7 +57,7 @@ func (c *MessageController) CreateMessage(ctx *gin.Context) {
 		UserID: user.ID,
 	}
 
-	if err := db.Create(message).Error; err != nil {
+	if err := c.db.Create(message).Error; err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -77,13 +70,8 @@ func (c *MessageController) CreateMessage(ctx *gin.Context) {
 		CreatedAt: message.CreatedAt,
 	}
 
-	fmt.Println("Broadcasting message to users...")
-	c.hub.BroadcastChan <- mv
-
-	if strings.HasPrefix(message.Text, "/stock=") {
-		fmt.Println("Sending message to bot...")
-		c.rb.Publish(strconv.Itoa(int(message.RoomID)), message.Text[7:])
-	}
+	// Broadcast message to Hub
+	c.hub.BroadcastMessage(mv)
 
 	response := &viewmodels.CreateMessageResponse{
 		MessageView: mv,

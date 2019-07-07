@@ -17,3 +17,7 @@ type CreateMessageRequest struct {
 type CreateMessageResponse struct {
 	MessageView
 }
+
+type ListMessageResponse struct {
+	Messages []MessageView `json:"messages"`
+}

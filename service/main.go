@@ -1,69 +1,20 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/streadway/amqp"
 
-	"github.com/hernanrocha/fin-chat/rabbit"
+	"github.com/hernanrocha/fin-chat/messenger"
 	"github.com/hernanrocha/fin-chat/service/controller"
 	_ "github.com/hernanrocha/fin-chat/service/docs"
+	"github.com/hernanrocha/fin-chat/service/hub"
+	"github.com/hernanrocha/fin-chat/service/hub/handler"
 	"github.com/hernanrocha/fin-chat/service/models"
-	"github.com/hernanrocha/fin-chat/service/viewmodels"
 )
-
-func handleRabbitResponse(rb rabbit.RabbitChannel, hub *controller.Hub) {
-	db := models.GetDB()
-
-	user := models.User{
-		Username: "Bot",
-		Email:    "bot@mail.com",
-	}
-	if err := db.Where("username = ?", "Bot").First(&user).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			fmt.Println("Creating bot user")
-			db.Create(&user)
-		}
-	}
-
-	msgs, err := rb.Consume()
-	if err != nil {
-		return
-	}
-
-	log.Printf("Waiting for messages from rabbit...")
-
-	for d := range msgs {
-		log.Printf("Received a message: %s", d.Body)
-		room, _ := strconv.Atoi(d.CorrelationId)
-		message := &models.Message{
-			Text:   string(d.Body),
-			RoomID: uint(room),
-			UserID: user.ID,
-		}
-
-		if err := db.Create(message).Error; err != nil {
-			log.Println("Error creating new message from bot: ", err)
-			continue
-		}
-
-		mv := viewmodels.MessageView{
-			ID:        message.ID,
-			Text:      message.Text,
-			RoomID:    message.RoomID,
-			Username:  user.Username,
-			CreatedAt: message.CreatedAt,
-		}
-
-		fmt.Println("Broadcasting message...")
-		hub.BroadcastChan <- mv
-	}
-}
 
 func failOnError(err error, msg string) {
 	if err != nil {
@@ -92,7 +43,7 @@ func getEnv(key, fallback string) string {
 // @BasePath /
 
 func main() {
-	fmt.Println("Starting web server...")
+	log.Println("Starting web server...")
 	os.Setenv("PORT", "8001")
 
 	// Setup Postgres database
@@ -114,18 +65,23 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	rb := rabbit.NewRabbitChannel(ch)
-	err = rb.QueueDeclare()
+	msg := messenger.NewRabbitMessenger(ch)
 	failOnError(err, "Failed to declare a queue")
 
-	// Run Chat Hub
-	hub := controller.NewHub()
-	hub.Run()
+	// Run Messages Hub
+	h := hub.NewHub()
+	h.Run()
 
-	// Run Bot Consumer
-	go handleRabbitResponse(rb, hub)
+	// Add CmdMessageHandler
+	handler, err := handler.NewCmdMessageHandler("cmd-rabbit", msg, h, models.GetDB())
+	failOnError(err, "Error starting command message handler")
+	h.AddClient(handler)
+
+	// Run CmdResponse Consumer
+	go msg.StartConsumer(handler.CmdResponseHandler)
 
 	// Setup router
-	r := controller.SetupRouter(rb, hub)
-	r.Run() // listen and serve on 0.0.0.0:8001
+	r := controller.SetupRouter(h)
+	err = r.Run() // listen and serve on 0.0.0.0:8001
+	failOnError(err, "Failed starting server")
 }

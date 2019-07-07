@@ -6,13 +6,13 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
-	"github.com/hernanrocha/fin-chat/rabbit"
+	"github.com/hernanrocha/fin-chat/service/hub"
 )
 
-func SetupRouter(rb rabbit.RabbitChannel, hub *Hub) *gin.Engine {
+func SetupRouter(hub hub.HubInterface) *gin.Engine {
 	// Controllers
 	c := NewRoomController()
-	m := NewMessageController(hub, rb)
+	m := NewMessageController(hub)
 	ws := NewWebSocketController(hub)
 	auth := NewAuthController()
 	authMiddleware, _ := auth.JWTMiddleware()

@@ -40,7 +40,7 @@
                         "description": "OK",
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.ListRoomResponse"
+                            "$ref": "#/definitions/viewmodels.ListRoomResponse"
                         }
                     }
                 }
@@ -69,7 +69,7 @@
                         "required": true,
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.CreateRoomRequest"
+                            "$ref": "#/definitions/viewmodels.CreateRoomRequest"
                         }
                     }
                 ],
@@ -78,7 +78,7 @@
                         "description": "OK",
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.CreateRoomResponse"
+                            "$ref": "#/definitions/viewmodels.CreateRoomResponse"
                         }
                     }
                 }
@@ -115,7 +115,7 @@
                         "description": "OK",
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.GetRoomResponse"
+                            "$ref": "#/definitions/viewmodels.GetRoomResponse"
                         }
                     }
                 }
@@ -152,7 +152,7 @@
                         "description": "OK",
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.ListMessageResponse"
+                            "$ref": "#/definitions/viewmodels.ListMessageResponse"
                         }
                     }
                 }
@@ -188,7 +188,7 @@
                         "required": true,
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.CreateMessageRequest"
+                            "$ref": "#/definitions/viewmodels.CreateMessageRequest"
                         }
                     }
                 ],
@@ -197,7 +197,7 @@
                         "description": "OK",
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.CreateMessageResponse"
+                            "$ref": "#/definitions/viewmodels.CreateMessageResponse"
                         }
                     }
                 }
@@ -221,7 +221,7 @@
                         "required": true,
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.LoginRequest"
+                            "$ref": "#/definitions/viewmodels.LoginRequest"
                         }
                     }
                 ],
@@ -230,7 +230,7 @@
                         "description": "OK",
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.LoginResponse"
+                            "$ref": "#/definitions/viewmodels.LoginResponse"
                         }
                     }
                 }
@@ -254,7 +254,7 @@
                         "required": true,
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.RegisterRequest"
+                            "$ref": "#/definitions/viewmodels.RegisterRequest"
                         }
                     }
                 ],
@@ -263,7 +263,7 @@
                         "description": "OK",
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.RegisterResponse"
+                            "$ref": "#/definitions/viewmodels.RegisterResponse"
                         }
                     }
                 }
@@ -271,7 +271,7 @@
         }
     },
     "definitions": {
-        "controller.CreateMessageRequest": {
+        "viewmodels.CreateMessageRequest": {
             "type": "object",
             "properties": {
                 "text": {
@@ -279,7 +279,7 @@
                 }
             }
         },
-        "controller.CreateMessageResponse": {
+        "viewmodels.CreateMessageResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -299,7 +299,7 @@
                 }
             }
         },
-        "controller.CreateRoomRequest": {
+        "viewmodels.CreateRoomRequest": {
             "type": "object",
             "properties": {
                 "name": {
@@ -307,18 +307,7 @@
                 }
             }
         },
-        "controller.CreateRoomResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.GetRoomResponse": {
+        "viewmodels.CreateRoomResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -329,29 +318,40 @@
                 }
             }
         },
-        "controller.ListMessageResponse": {
+        "viewmodels.GetRoomResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "viewmodels.ListMessageResponse": {
             "type": "object",
             "properties": {
                 "messages": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/controller.MessageView"
+                        "$ref": "#/definitions/viewmodels.MessageView"
                     }
                 }
             }
         },
-        "controller.ListRoomResponse": {
+        "viewmodels.ListRoomResponse": {
             "type": "object",
             "properties": {
                 "rooms": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/controller.RoomView"
+                        "$ref": "#/definitions/viewmodels.RoomView"
                     }
                 }
             }
         },
-        "controller.LoginRequest": {
+        "viewmodels.LoginRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -366,7 +366,7 @@
                 }
             }
         },
-        "controller.LoginResponse": {
+        "viewmodels.LoginResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -380,7 +380,7 @@
                 }
             }
         },
-        "controller.MessageView": {
+        "viewmodels.MessageView": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -400,7 +400,7 @@
                 }
             }
         },
-        "controller.RegisterRequest": {
+        "viewmodels.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -425,7 +425,7 @@
                 }
             }
         },
-        "controller.RegisterResponse": {
+        "viewmodels.RegisterResponse": {
             "type": "object",
             "required": [
                 "email",
@@ -446,7 +446,7 @@
                 }
             }
         },
-        "controller.RoomView": {
+        "viewmodels.RoomView": {
             "type": "object",
             "properties": {
                 "id": {

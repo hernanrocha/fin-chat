@@ -1,11 +1,11 @@
 basePath: /
 definitions:
-  controller.CreateMessageRequest:
+  viewmodels.CreateMessageRequest:
     properties:
       text:
         type: string
     type: object
-  controller.CreateMessageResponse:
+  viewmodels.CreateMessageResponse:
     properties:
       created_at:
         type: string
@@ -18,40 +18,40 @@ definitions:
       username:
         type: string
     type: object
-  controller.CreateRoomRequest:
+  viewmodels.CreateRoomRequest:
     properties:
       name:
         type: string
     type: object
-  controller.CreateRoomResponse:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  controller.GetRoomResponse:
+  viewmodels.CreateRoomResponse:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  controller.ListMessageResponse:
+  viewmodels.GetRoomResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  viewmodels.ListMessageResponse:
     properties:
       messages:
         items:
-          $ref: '#/definitions/controller.MessageView'
+          $ref: '#/definitions/viewmodels.MessageView'
         type: array
     type: object
-  controller.ListRoomResponse:
+  viewmodels.ListRoomResponse:
     properties:
       rooms:
         items:
-          $ref: '#/definitions/controller.RoomView'
+          $ref: '#/definitions/viewmodels.RoomView'
         type: array
     type: object
-  controller.LoginRequest:
+  viewmodels.LoginRequest:
     properties:
       password:
         type: string
@@ -61,7 +61,7 @@ definitions:
     - password
     - username
     type: object
-  controller.LoginResponse:
+  viewmodels.LoginResponse:
     properties:
       code:
         type: integer
@@ -70,7 +70,7 @@ definitions:
       token:
         type: string
     type: object
-  controller.MessageView:
+  viewmodels.MessageView:
     properties:
       created_at:
         type: string
@@ -83,7 +83,7 @@ definitions:
       username:
         type: string
     type: object
-  controller.RegisterRequest:
+  viewmodels.RegisterRequest:
     properties:
       email:
         type: string
@@ -100,7 +100,7 @@ definitions:
     - password
     - username
     type: object
-  controller.RegisterResponse:
+  viewmodels.RegisterResponse:
     properties:
       email:
         type: string
@@ -114,7 +114,7 @@ definitions:
     - email
     - username
     type: object
-  controller.RoomView:
+  viewmodels.RoomView:
     properties:
       id:
         type: integer
@@ -148,7 +148,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.ListRoomResponse'
+            $ref: '#/definitions/viewmodels.ListRoomResponse'
             type: object
       summary: List Rooms
       tags:
@@ -166,7 +166,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/controller.CreateRoomRequest'
+          $ref: '#/definitions/viewmodels.CreateRoomRequest'
           type: object
       produces:
       - application/json
@@ -174,7 +174,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.CreateRoomResponse'
+            $ref: '#/definitions/viewmodels.CreateRoomResponse'
             type: object
       summary: Create Room
       tags:
@@ -199,7 +199,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.GetRoomResponse'
+            $ref: '#/definitions/viewmodels.GetRoomResponse'
             type: object
       summary: Get Room
       tags:
@@ -224,7 +224,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.ListMessageResponse'
+            $ref: '#/definitions/viewmodels.ListMessageResponse'
             type: object
       summary: List Room Messages
       tags:
@@ -247,7 +247,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/controller.CreateMessageRequest'
+          $ref: '#/definitions/viewmodels.CreateMessageRequest'
           type: object
       produces:
       - application/json
@@ -255,7 +255,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.CreateMessageResponse'
+            $ref: '#/definitions/viewmodels.CreateMessageResponse'
             type: object
       summary: Create Message
       tags:
@@ -269,7 +269,7 @@ paths:
         name: login
         required: true
         schema:
-          $ref: '#/definitions/controller.LoginRequest'
+          $ref: '#/definitions/viewmodels.LoginRequest'
           type: object
       produces:
       - application/json
@@ -277,7 +277,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.LoginResponse'
+            $ref: '#/definitions/viewmodels.LoginResponse'
             type: object
       summary: Login
       tags:
@@ -291,7 +291,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/controller.RegisterRequest'
+          $ref: '#/definitions/viewmodels.RegisterRequest'
           type: object
       produces:
       - application/json
@@ -299,7 +299,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.RegisterResponse'
+            $ref: '#/definitions/viewmodels.RegisterResponse'
             type: object
       summary: Register User
       tags:
