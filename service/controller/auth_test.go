@@ -82,10 +82,6 @@ func TestRegisterLogin(t *testing.T) {
 	assert.True(t, ok)
 	_, ok = token.(string)
 	assert.True(t, ok)
-
-	//jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-	//	return "", nil
-	//})
 }
 
 func TestRegisterErrorNoPassword(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -91,8 +92,15 @@ func performAuthRequest(r http.Handler, method, path string, body gin.H, token s
 	return w
 }
 
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 func SetupDatabase() error {
-	dbconn := "host=localhost port=15432 user=postgres password=postgres dbname=finchat sslmode=disable"
+	dbconn := getEnv("DB_CONNECTION", "host=localhost port=15432 user=postgres password=postgres dbname=finchat sslmode=disable")
 	db, err := gorm.Open("postgres", dbconn)
 
 	if err != nil {

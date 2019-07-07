@@ -71,6 +71,52 @@ func TestSendMessage(t *testing.T) {
 	mock2.AssertExpectations(t)
 }
 
+func TestHubChannels(t *testing.T) {
+	mock := NewMockMessageHandler()
+	mock.On("GetID").Return("mock")
+
+	hub := NewHub()
+
+	go hub.AddClient(mock)
+	<-hub.AddClientChan
+
+	go hub.RemoveClient(mock)
+	<-hub.RemoveClientChan
+
+	msg := viewmodels.MessageView{
+		ID:        2,
+		Text:      "Text",
+		Username:  "Username",
+		CreatedAt: time.Now(),
+		RoomID:    3,
+	}
+	go hub.BroadcastMessage(msg)
+	<-hub.BroadcastChan
+}
+
+func TestHubRun(t *testing.T) {
+	mock1 := NewMockMessageHandler()
+	mock1.On("GetID").Return("mock")
+	mock1.On("HandleMessage", mock.AnythingOfType("viewmodels.MessageView")).
+		Return(nil).Once()
+
+	hub := NewHub()
+	hub.Run()
+
+	hub.AddClient(mock1)
+
+	msg := viewmodels.MessageView{
+		ID:        2,
+		Text:      "Text",
+		Username:  "Username",
+		CreatedAt: time.Now(),
+		RoomID:    3,
+	}
+	hub.BroadcastMessage(msg)
+
+	hub.RemoveClient(mock1)
+}
+
 type MockMessageHandler struct {
 	mock.Mock
 }

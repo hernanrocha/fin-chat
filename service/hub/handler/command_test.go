@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/hernanrocha/fin-chat/messenger"
-	"github.com/hernanrocha/fin-chat/service/viewmodels"
 	"github.com/hernanrocha/fin-chat/service/hub/mocks"
+	"github.com/hernanrocha/fin-chat/service/viewmodels"
 )
 
 type CommandMessageHandlerSuite struct {

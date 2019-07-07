@@ -8,6 +8,9 @@ genswagger:
 	go get -u github.com/swaggo/swag/cmd/swag
 	swag init
 
+test:
+	go test github.com/hernanrocha/fin-chat... --cover -count=1
+
 build:
 	docker build -t fin-chat-web -f web-release.dockerfile .
 	docker build -t fin-chat-bot -f bot-release.dockerfile .
