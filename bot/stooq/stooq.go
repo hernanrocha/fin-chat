@@ -9,7 +9,7 @@ import (
 )
 
 func StooqHandler(s string) (string, error) {
-	resp, err := http.Get(fmt.Sprintf("https://stooq.com/q/l/?s=%s.us&f=sd2t2ohlcv&h&e=csv", s))
+	resp, err := http.Get(fmt.Sprintf("http://stooq.com/q/l/?s=%s.us&f=sd2t2ohlcv&h&e=csv", s))
 	reader := csv.NewReader(bufio.NewReader(resp.Body))
 	_, err = reader.Read()
 	if err != nil {
