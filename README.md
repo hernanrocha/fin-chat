@@ -8,6 +8,10 @@ It has following setup:
 - GoServer: Rest API server. It provides authentication with JWT tokens and the API is documented with Swagger
 - GoBot: a simple bot who listens to commands sent through rabbit and gets information from stooq.com
 
+## CircleCI
+
+[![CircleCI](https://circleci.com/gh/hernanrocha/fin-chat.svg?style=svg)](https://circleci.com/gh/hernanrocha/fin-chat)
+
 ## Run with Docker
 
 ```
