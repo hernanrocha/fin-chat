@@ -2,6 +2,10 @@ build:
 	go build -o fin-chat-service service/main.go
 	go build -o fin-chat-bot bot/main.go
 
+lambdaupload:
+	zip function.zip fin-chat-bot 
+	aws lambda update-function-code --function-name StooqParse --zip-file fileb://function.zip
+
 runservice:
 	go run service/main.go
 
