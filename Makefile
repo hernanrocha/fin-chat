@@ -20,8 +20,9 @@ test:
 	go test github.com/hernanrocha/fin-chat... --cover -count=1
 
 dockerbuild:
-	docker build -t fin-chat-web -f web-release.dockerfile .
-	docker build -t fin-chat-bot -f bot-release.dockerfile .
+	docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
+	docker push 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat
+#	docker build -t fin-chat-bot -f bot-release.dockerfile .
 
 dockerservice:
 	docker run --env RABBIT_CONNECTION=amqp://rabbitmq:rabbitmq@192.168.1.36:5672/ \

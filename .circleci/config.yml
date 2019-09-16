@@ -31,6 +31,8 @@ jobs:
             gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
       - run: make
       - aws-cli/setup
+      - run: $(aws ecr get-login --no-include-email --region us-east-2)
+      - run: make dockerbuild
       - run:
           name: Upload Lambda
           command: make lambdaupload
