@@ -15,6 +15,7 @@ jobs:
       TEST_RESULTS: /tmp/test-results 
     steps:
       - checkout
+      - aws-cli/setup
       - run: mkdir -p $TEST_RESULTS
       - restore_cache:
           keys:
@@ -30,16 +31,15 @@ jobs:
             PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
             gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
       - run: make
-      - aws-cli/setup
+      - save_cache:
+          key: go-mod-v4-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
       - run: $(aws ecr get-login --no-include-email --region us-east-2)
       - run: make dockerbuild
       - run:
           name: Upload Lambda
           command: make lambdaupload
-      - save_cache:
-          key: go-mod-v4-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
       - store_artifacts:
           path: /tmp/test-results
           destination: raw-test-output
