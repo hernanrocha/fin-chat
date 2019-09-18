@@ -38,7 +38,7 @@ jobs:
           paths:
             - "/go/pkg/mod"
       - run: $(aws ecr get-login --no-include-email --region us-east-2)
-      - run: docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
+      - run: dockerd && docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
       - run: docker push 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat
       - run:
           name: Upload Lambda
