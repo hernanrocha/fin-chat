@@ -82,6 +82,12 @@ workflows:
       - deploy_lambda:
           requires:
           - build
+          filters:
+            branches:
+              only: master
       - deploy_ecs:
           requires:
           - build
+          filters:
+            branches:
+              only: master
