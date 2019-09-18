@@ -63,6 +63,10 @@ func StooqHandler(ctx context.Context, sqsEvent events.SQSEvent) error {
 func Handle(req StooqRequest) (StooqResponse, error) {
 	s := req.Code
 	resp, err := http.Get(fmt.Sprintf("http://stooq.com/q/l/?s=%s.us&f=sd2t2ohlcv&h&e=csv", s))
+	if err != nil {
+		return StooqResponse{Result: fmt.Sprintf("Error getting HTTP response for %s", s)}, err
+	}
+
 	reader := csv.NewReader(bufio.NewReader(resp.Body))
 	_, err = reader.Read()
 	if err != nil {

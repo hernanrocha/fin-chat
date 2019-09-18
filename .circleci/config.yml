@@ -1,6 +1,8 @@
 version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@0.1
+  docker: circleci/docker@0.5
+  python: circleci/python@0.2
 jobs:
   build:
     docker:
@@ -30,10 +32,6 @@ jobs:
             PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
             gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
       - run: make
-      - aws-cli/setup
-      - run:
-          name: Upload Lambda
-          command: make lambdaupload
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
@@ -43,8 +41,52 @@ jobs:
           destination: raw-test-output
       - store_test_results:
           path: /tmp/test-results
+      - persist_to_workspace:
+          root: /home/circleci/project
+          paths:
+            - dist
+  deploy_lambda:
+    executor: python/default
+    steps:
+      - attach_workspace:
+          at: .
+      - aws-cli/setup
+      - run: 
+          name: Zip Function
+          command: cp dist/fin-chat-bot . && zip function.zip fin-chat-bot
+      - run:
+          name: Upload to AWS Lambda
+          command:  aws lambda update-function-code --function-name StooqParse --zip-file fileb://function.zip
+  deploy_ecs:
+    executor: docker/machine
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - aws-cli/setup
+      - run: 
+          name: Build docker image
+          command: docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
+      - run: 
+          name: Get AWS ECR login
+          command: $(aws ecr get-login --no-include-email --region us-east-2)
+      - run:
+          name: Upload image to ECR
+          command: docker push 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat
 workflows:
   version: 2
   build-workflow:
     jobs:
       - build
+      - deploy_lambda:
+          requires:
+          - build
+          filters:
+            branches:
+              only: master
+      - deploy_ecs:
+          requires:
+          - build
+          filters:
+            branches:
+              only: master

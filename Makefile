@@ -1,10 +1,6 @@
 build:
-	go build -o fin-chat-service service/main.go
-	go build -o fin-chat-bot bot/main.go
-
-lambdaupload:
-	zip function.zip fin-chat-bot 
-	aws lambda update-function-code --function-name StooqParse --zip-file fileb://function.zip
+	go build -o dist/fin-chat-service service/main.go
+	go build -o dist/fin-chat-bot bot/main.go
 
 runservice:
 	go run service/main.go
@@ -18,10 +14,6 @@ genswagger:
 
 test:
 	go test github.com/hernanrocha/fin-chat... --cover -count=1
-
-dockerbuild:
-	docker build -t fin-chat-web -f web-release.dockerfile .
-	docker build -t fin-chat-bot -f bot-release.dockerfile .
 
 dockerservice:
 	docker run --env RABBIT_CONNECTION=amqp://rabbitmq:rabbitmq@192.168.1.36:5672/ \
