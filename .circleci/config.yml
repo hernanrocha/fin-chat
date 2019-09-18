@@ -54,9 +54,11 @@ jobs:
       - aws-cli/setup
       - run: echo $PWD
       - run: ls
+      - run: cp dist/fin-chat-bot .
+      - run: zip function.zip fin-chat-bot
       - run:
           name: Upload Lambda
-          command: make lambdaupload
+          command:  aws lambda update-function-code --function-name StooqParse --zip-file fileb://function.zip
   deploy_ecs:
     executor: docker/machine
     steps:
