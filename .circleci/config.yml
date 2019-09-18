@@ -46,8 +46,7 @@ jobs:
           paths:
             - dist
   deploy_lambda:
-    docker:
-      - image: python/default
+    executor: python/default
     steps:
       - attach_workspace:
           at: .
@@ -60,6 +59,7 @@ jobs:
   deploy_ecs:
     executor: docker/machine
     steps:
+      - checkout
       - attach_workspace:
           at: .
       - run: echo $PWD
