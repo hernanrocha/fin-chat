@@ -16,7 +16,7 @@ jobs:
       TEST_RESULTS: /tmp/test-results 
     steps:
       - checkout
-#      - aws-cli/setup
+      - aws-cli/setup
       - docker/install-docker
       - run: mkdir -p $TEST_RESULTS
       - restore_cache:
