@@ -16,7 +16,7 @@ jobs:
       TEST_RESULTS: /tmp/test-results 
     steps:
       - checkout
-      - aws-cli/setup
+#      - aws-cli/setup
       - docker/install-docker
       - run: mkdir -p $TEST_RESULTS
       - restore_cache:
@@ -25,20 +25,22 @@ jobs:
       - run:
           name: Waiting for Postgres to be ready
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
-      - run:
-          name: Run tests
-          environment:
-            DB_CONNECTION: "host=localhost port=5432 user=postgres password=postgres dbname=finchat sslmode=disable"
-          command: |
-            PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
-            gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
+ #     - run:
+ #         name: Run tests
+ #         environment:
+ #           DB_CONNECTION: "host=localhost port=5432 user=postgres password=postgres dbname=finchat sslmode=disable"
+ #         command: |
+ #           PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
+ #           gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
       - run: make
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
       - run: $(aws ecr get-login --no-include-email --region us-east-2)
-      - run: dockerd && docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
+      - run: echo $(whoami)
+      - run: sudo dockerd
+      - run: sudo dockerd && sudo docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
       - run: docker push 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat
       - run:
           name: Upload Lambda
