@@ -1,4 +1,4 @@
-FROM scratch
+FROM ubuntu
 COPY dist/fin-chat-service /app/
 WORKDIR /app
 EXPOSE 5000
