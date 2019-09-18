@@ -38,6 +38,7 @@ jobs:
           paths:
             - "/go/pkg/mod"
       - run: $(aws ecr get-login --no-include-email --region us-east-2)
+      - run: docker -v
       - run: sudo make dockerbuild
       - run:
           name: Upload Lambda
