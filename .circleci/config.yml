@@ -16,9 +16,7 @@ jobs:
       TEST_RESULTS: /tmp/test-results 
     steps:
       - checkout
-      - aws-cli/setup
-      - docker/install-docker
-      - run: mkdir -p $TEST_RESULTS
+#      - run: mkdir -p $TEST_RESULTS
       - restore_cache:
           keys:
             - go-mod-v4-{{ checksum "go.sum" }}
@@ -33,25 +31,52 @@ jobs:
  #           PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
  #           gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
       - run: make
+      - run: echo $PWD
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
-      - run: $(aws ecr get-login --no-include-email --region us-east-2)
-      - run: echo $(whoami)
-      - run: sudo dockerd
-      - run: sudo dockerd && sudo docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
-      - run: docker push 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat
+#      - store_artifacts:
+#          path: /tmp/test-results
+#          destination: raw-test-output
+#      - store_test_results:
+#          path: /tmp/test-results
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist
+  deploy_lambda:
+    docker:
+      - image: ubuntu:bionic
+    steps:
+      - attach_workspace:
+          at: .
+      - aws-cli/setup
+      - run: echo $PWD
+      - run: ls
       - run:
           name: Upload Lambda
           command: make lambdaupload
-      - store_artifacts:
-          path: /tmp/test-results
-          destination: raw-test-output
-      - store_test_results:
-          path: /tmp/test-results
+  deploy_ecs:
+    docker:
+      - image: docker
+    steps:
+      - attach_workspace:
+          at: .
+      - run: echo $PWD
+      - run: ls
+      - aws-cli/setup
+      - run: $(aws ecr get-login --no-include-email --region us-east-2)
+      - run: docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
+      - run: docker push 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat
 workflows:
   version: 2
   build-workflow:
     jobs:
       - build
+      - deploy_lambda:
+          requires:
+          - build
+      - deploy_ecs:
+          requires:
+          - build

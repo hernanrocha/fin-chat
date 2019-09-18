@@ -24,7 +24,7 @@
 
 FROM scratch
 #COPY --from=builder /build/webserver /app/
-COPY fin-chat-service /app/
+COPY dist/fin-chat-service /app/
 WORKDIR /app
 EXPOSE 5000
 CMD ["./fin-chat-service"]
