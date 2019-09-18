@@ -32,7 +32,6 @@ jobs:
             PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
             gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
       - run: make
-      - run: echo $PWD
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
