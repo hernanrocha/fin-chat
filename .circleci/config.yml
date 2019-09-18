@@ -17,31 +17,31 @@ jobs:
       TEST_RESULTS: /tmp/test-results 
     steps:
       - checkout
-#      - run: mkdir -p $TEST_RESULTS
+      - run: mkdir -p $TEST_RESULTS
       - restore_cache:
           keys:
             - go-mod-v4-{{ checksum "go.sum" }}
       - run:
           name: Waiting for Postgres to be ready
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
- #     - run:
- #         name: Run tests
- #         environment:
- #           DB_CONNECTION: "host=localhost port=5432 user=postgres password=postgres dbname=finchat sslmode=disable"
- #         command: |
- #           PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
- #           gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
+      - run:
+          name: Run tests
+          environment:
+            DB_CONNECTION: "host=localhost port=5432 user=postgres password=postgres dbname=finchat sslmode=disable"
+          command: |
+            PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
+            gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
       - run: make
       - run: echo $PWD
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
-#      - store_artifacts:
-#          path: /tmp/test-results
-#          destination: raw-test-output
-#      - store_test_results:
-#          path: /tmp/test-results
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
       - persist_to_workspace:
           root: /home/circleci/project
           paths:
@@ -52,12 +52,11 @@ jobs:
       - attach_workspace:
           at: .
       - aws-cli/setup
-      - run: echo $PWD
-      - run: ls
-      - run: cp dist/fin-chat-bot .
-      - run: zip function.zip fin-chat-bot
+      - run: 
+          name: Zip Function
+          command: cp dist/fin-chat-bot . && zip function.zip fin-chat-bot
       - run:
-          name: Upload Lambda
+          name: Upload to AWS Lambda
           command:  aws lambda update-function-code --function-name StooqParse --zip-file fileb://function.zip
   deploy_ecs:
     executor: docker/machine
@@ -65,12 +64,16 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: echo $PWD
-      - run: ls
-      - run: docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
       - aws-cli/setup
-      - run: $(aws ecr get-login --no-include-email --region us-east-2)
-      - run: docker push 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat
+      - run: 
+          name: Build docker image
+          command: docker build -t 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat -f web-release.dockerfile .
+      - run: 
+          name: Get AWS ECR login
+          command: $(aws ecr get-login --no-include-email --region us-east-2)
+      - run:
+          name: Upload image to ECR
+          command: docker push 089576757282.dkr.ecr.us-east-2.amazonaws.com/finchat
 workflows:
   version: 2
   build-workflow:
