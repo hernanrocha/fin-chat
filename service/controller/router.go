@@ -27,6 +27,13 @@ func SetupRouter(hub hub.HubInterface) *gin.Engine {
 	corsConfig.AllowCredentials = true
 	r.Use(cors.New(corsConfig))
 
+	// Ping
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
 	// Auth JWT
 	r.POST("/login", authMiddleware.LoginHandler)
 	r.POST("/register", auth.Register)
