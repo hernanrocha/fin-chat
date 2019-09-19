@@ -44,6 +44,7 @@ func (c *WebSocketController) WebSocket(ctx *gin.Context) {
 		_, _, err = conn.ReadMessage()
 		if err != nil {
 			log.Println("ERROR ON WEBSOCKET: CLOSING...")
+			log.Println(err)
 			c.hub.RemoveClient(handler)
 			return
 		}
