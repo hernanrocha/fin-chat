@@ -199,12 +199,24 @@ func (s *sqsCommandMessenger) StartConsumer(fn func(BotMessage) error) error {
 
 		for _, msg := range output.Messages {
 			var res BotMessage
+
+			// Parse message
 			if err := json.Unmarshal([]byte(*msg.Body), &res); err != nil {
 				return err
 			}
 
+			// Process message
 			if err := fn(res); err != nil {
 				log.Printf("Error processing message: %s\n", err.Error())
+			}
+
+			// Delete message
+			dmr := &sqs.DeleteMessageInput{
+				QueueUrl:      aws.String(os.Getenv("SQS_COMMANDS_RESPONSE_URL")),
+				ReceiptHandle: msg.ReceiptHandle,
+			}
+			if _, err = s.svc.DeleteMessage(dmr); err != nil {
+				log.Printf("Error deleting message from queue: %s\n", err.Error())
 			}
 		}
 	}
