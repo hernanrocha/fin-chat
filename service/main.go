@@ -69,6 +69,7 @@ func main() {
 	handler, err := handler.NewCmdMessageHandler("cmd-sqs", msg, h, models.GetDB())
 	failOnError(err, "Error starting command message handler")
 	h.AddClient(handler)
+	log.Println("Command message handler started")
 
 	// Run CmdResponse Consumer
 	go msg.StartConsumer(handler.CmdResponseHandler)

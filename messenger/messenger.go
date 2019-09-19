@@ -183,6 +183,8 @@ func (s *sqsCommandMessenger) Publish(roomID uint, message string) error {
 
 // Start command response message consumer
 func (s *sqsCommandMessenger) StartConsumer(fn func(BotMessage) error) error {
+	log.Println("Starting command message response consumer")
+
 	for {
 		output, err := s.svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 			QueueUrl:            aws.String(os.Getenv("SQS_COMMANDS_RESPONSE_URL")),
