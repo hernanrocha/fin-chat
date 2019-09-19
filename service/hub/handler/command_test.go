@@ -74,7 +74,7 @@ func (suite *CommandMessageHandlerSuite) TestHandleMessageNotCommand() {
 
 func (suite *CommandMessageHandlerSuite) TestHandleMessageCommand() {
 	expectTestUser(suite.mockDb)
-	suite.mockMessenger.On("Publish", "100", "AAPL").Once()
+	suite.mockMessenger.On("Publish", uint(100), "AAPL").Once()
 
 	ID := "random-id"
 	handler, err := NewCmdMessageHandler(ID, suite.mockMessenger, suite.mockHub, suite.DB)
@@ -134,8 +134,8 @@ func NewMockBotCommandMessenger() *MockBotCommandMessenger {
 	return &MockBotCommandMessenger{}
 }
 
-func (m *MockBotCommandMessenger) Publish(key, message string) error {
-	m.Called(key, message)
+func (m *MockBotCommandMessenger) Publish(roomID uint, message string) error {
+	m.Called(roomID, message)
 	return nil
 }
 
