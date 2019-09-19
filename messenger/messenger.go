@@ -1,9 +1,13 @@
 package messenger
 
 import (
+	"encoding/json"
 	"log"
+	"os"
 	"strconv"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/streadway/amqp"
 )
 
@@ -14,9 +18,9 @@ type BotMessage struct {
 
 type BotCommandMessenger interface {
 	// Publish a command request message
-	Publish(key, message string) error
+	Publish(roomID uint, message string) error
 	// Start command request message handler
-	StartHandler(func(string) (string, error)) error
+	// StartHandler(func(string) (string, error)) error
 	// Start command response message consumer
 	StartConsumer(func(BotMessage) error) error
 }
@@ -24,6 +28,12 @@ type BotCommandMessenger interface {
 func NewRabbitMessenger(ch *amqp.Channel) *rabbitCommandMessenger {
 	return &rabbitCommandMessenger{
 		Ch: ch,
+	}
+}
+
+func NewSQSMessenger(svc *sqs.SQS) *sqsCommandMessenger {
+	return &sqsCommandMessenger{
+		svc: svc,
 	}
 }
 
@@ -151,4 +161,49 @@ func (r *rabbitCommandMessenger) StartConsumer(fn func(BotMessage) error) error 
 	}
 
 	return nil
+}
+
+type sqsCommandMessenger struct {
+	svc *sqs.SQS
+}
+
+// Publish a command request message
+func (s *sqsCommandMessenger) Publish(roomID uint, message string) error {
+	req := &BotMessage{
+		Message: message,
+		RoomID:  roomID,
+	}
+	resStr, _ := json.Marshal(req)
+	_, err := s.svc.SendMessage(&sqs.SendMessageInput{
+		MessageBody: aws.String(string(resStr)),
+		QueueUrl:    aws.String(os.Getenv("SQS_COMMANDS_REQUEST_URL")),
+	})
+	return err
+}
+
+// Start command response message consumer
+func (s *sqsCommandMessenger) StartConsumer(fn func(BotMessage) error) error {
+	for {
+		output, err := s.svc.ReceiveMessage(&sqs.ReceiveMessageInput{
+			QueueUrl:            aws.String(os.Getenv("SQS_COMMANDS_RESPONSE_URL")),
+			MaxNumberOfMessages: aws.Int64(1),
+			WaitTimeSeconds:     aws.Int64(1),
+		})
+
+		if err != nil {
+			log.Printf("Failed to fetch sqs message %v", err)
+			return err
+		}
+
+		for _, msg := range output.Messages {
+			var res BotMessage
+			if err := json.Unmarshal([]byte(*msg.Body), &res); err != nil {
+				return err
+			}
+
+			if err := fn(res); err != nil {
+				log.Printf("Error processing message: %s\n", err.Error())
+			}
+		}
+	}
 }

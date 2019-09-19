@@ -8,7 +8,7 @@ import (
 
 func TestStooqHandler(t *testing.T) {
 	t.Skip("This test fails in CircleCI")
-	res, err := Handle(StooqRequest{Code: "AAPL"})
+	res, err := Handle("AAPL")
 	assert.Nil(t, err)
-	assert.Contains(t, res.Result, "per share")
+	assert.Contains(t, res, "per share")
 }

@@ -2,15 +2,14 @@ package handler
 
 import (
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/jinzhu/gorm"
 
 	"github.com/hernanrocha/fin-chat/messenger"
+	"github.com/hernanrocha/fin-chat/service/hub"
 	"github.com/hernanrocha/fin-chat/service/models"
 	"github.com/hernanrocha/fin-chat/service/viewmodels"
-	"github.com/hernanrocha/fin-chat/service/hub"
 )
 
 type CmdMessageHandler struct {
@@ -40,7 +39,7 @@ func (h *CmdMessageHandler) HandleMessage(msg viewmodels.MessageView) error {
 	if strings.HasPrefix(msg.Text, "/stock=") {
 		cmd := msg.Text[7:]
 		log.Printf("Sending command '%s' to StockBot...\n", cmd)
-		h.msg.Publish(strconv.Itoa(int(msg.RoomID)), cmd)
+		h.msg.Publish(msg.RoomID, cmd)
 	}
 
 	return nil

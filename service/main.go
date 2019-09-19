@@ -4,12 +4,16 @@ import (
 	"log"
 	"os"
 
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
+	"github.com/hernanrocha/fin-chat/messenger"
 	"github.com/hernanrocha/fin-chat/service/controller"
 	_ "github.com/hernanrocha/fin-chat/service/docs"
 	"github.com/hernanrocha/fin-chat/service/hub"
+	"github.com/hernanrocha/fin-chat/service/hub/handler"
 	"github.com/hernanrocha/fin-chat/service/models"
 )
 
@@ -52,34 +56,22 @@ func main() {
 	// Run migration
 	models.Setup(db)
 
-	/*
-		// Setup RabbitMQ
-		rabbitconn := getEnv("RABBIT_CONNECTION", "amqp://rabbitmq:rabbitmq@localhost:5672/")
-		conn, err := amqp.Dial(rabbitconn)
-		failOnError(err, "Failed to connect to RabbitMQ")
-		defer conn.Close()
-
-		ch, err := conn.Channel()
-		failOnError(err, "Failed to open a channel")
-		defer ch.Close()
-
-		msg := messenger.NewRabbitMessenger(ch)
-		failOnError(err, "Failed to declare a queue")
-	*/
+	// Setup SQS
+	awsSession := session.New()
+	svc := sqs.New(awsSession)
+	msg := messenger.NewSQSMessenger(svc)
 
 	// Run Messages Hub
 	h := hub.NewHub()
 	h.Run()
 
-	/*
-		// Add CmdMessageHandler
-		handler, err := handler.NewCmdMessageHandler("cmd-rabbit", msg, h, models.GetDB())
-		failOnError(err, "Error starting command message handler")
-		h.AddClient(handler)
+	// Add CmdMessageHandler
+	handler, err := handler.NewCmdMessageHandler("cmd-sqs", msg, h, models.GetDB())
+	failOnError(err, "Error starting command message handler")
+	h.AddClient(handler)
 
-		// Run CmdResponse Consumer
-		go msg.StartConsumer(handler.CmdResponseHandler)
-	*/
+	// Run CmdResponse Consumer
+	go msg.StartConsumer(handler.CmdResponseHandler)
 
 	// Setup router
 	r := controller.SetupRouter(h)
