@@ -189,7 +189,7 @@ func (s *sqsCommandMessenger) StartConsumer(fn func(BotMessage) error) error {
 		output, err := s.svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 			QueueUrl:            aws.String(os.Getenv("SQS_COMMANDS_RESPONSE_URL")),
 			MaxNumberOfMessages: aws.Int64(1),
-			WaitTimeSeconds:     aws.Int64(1),
+			WaitTimeSeconds:     aws.Int64(20),
 		})
 
 		if err != nil {
