@@ -22,18 +22,18 @@ type BotMessage struct {
 	Message string
 }
 
-func StooqHandler(ctx context.Context, sqsEvent events.SQSEvent) error {
-	if len(sqsEvent.Records) == 0 {
+func StooqHandler(ctx context.Context, snsEvent events.SNSEvent) error {
+	if len(snsEvent.Records) == 0 {
 		return errors.New("No SQS message passed to function")
 	}
 
 	mySession := session.New()
 	svc := sqs.New(mySession)
 
-	for _, msg := range sqsEvent.Records {
-		fmt.Printf("Got SQS message %q with body %q\n", msg.MessageId, msg.Body)
+	for _, msg := range snsEvent.Records {
+		fmt.Printf("Got SQS message %q with body %q\n", msg.SNS.MessageID, msg.SNS.Message)
 		var req BotMessage
-		if err := json.Unmarshal([]byte(msg.Body), &req); err != nil {
+		if err := json.Unmarshal([]byte(msg.SNS.Message), &req); err != nil {
 			return err
 		}
 
