@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -58,8 +59,9 @@ func main() {
 
 	// Setup SQS
 	awsSession := session.New()
-	svc := sqs.New(awsSession)
-	msg := messenger.NewSQSMessenger(svc)
+	snsSvc := sns.New(awsSession)
+	sqsSvc := sqs.New(awsSession)
+	msg := messenger.NewSQSMessenger(snsSvc, sqsSvc)
 
 	// Run Messages Hub
 	h := hub.NewHub()

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/streadway/amqp"
 )
@@ -31,9 +32,10 @@ func NewRabbitMessenger(ch *amqp.Channel) *rabbitCommandMessenger {
 	}
 }
 
-func NewSQSMessenger(svc *sqs.SQS) *sqsCommandMessenger {
+func NewSQSMessenger(snsSvc *sns.SNS, sqsSvc *sqs.SQS) *sqsCommandMessenger {
 	return &sqsCommandMessenger{
-		svc: svc,
+		sqsSvc: sqsSvc,
+		snsSvc: snsSvc,
 	}
 }
 
@@ -164,7 +166,8 @@ func (r *rabbitCommandMessenger) StartConsumer(fn func(BotMessage) error) error 
 }
 
 type sqsCommandMessenger struct {
-	svc *sqs.SQS
+	snsSvc *sns.SNS
+	sqsSvc *sqs.SQS
 }
 
 // Publish a command request message
@@ -174,9 +177,9 @@ func (s *sqsCommandMessenger) Publish(roomID uint, message string) error {
 		RoomID:  roomID,
 	}
 	resStr, _ := json.Marshal(req)
-	_, err := s.svc.SendMessage(&sqs.SendMessageInput{
-		MessageBody: aws.String(string(resStr)),
-		QueueUrl:    aws.String(os.Getenv("SQS_COMMANDS_REQUEST_URL")),
+	_, err := s.snsSvc.Publish(&sns.PublishInput{
+		Message:  aws.String(string(resStr)),
+		TopicArn: aws.String(os.Getenv("SQS_COMMANDS_REQUEST_URL")),
 	})
 	return err
 }
@@ -186,7 +189,7 @@ func (s *sqsCommandMessenger) StartConsumer(fn func(BotMessage) error) error {
 	log.Println("Starting command message response consumer")
 
 	for {
-		output, err := s.svc.ReceiveMessage(&sqs.ReceiveMessageInput{
+		output, err := s.sqsSvc.ReceiveMessage(&sqs.ReceiveMessageInput{
 			QueueUrl:            aws.String(os.Getenv("SQS_COMMANDS_RESPONSE_URL")),
 			MaxNumberOfMessages: aws.Int64(1),
 			WaitTimeSeconds:     aws.Int64(20),
@@ -215,7 +218,7 @@ func (s *sqsCommandMessenger) StartConsumer(fn func(BotMessage) error) error {
 				QueueUrl:      aws.String(os.Getenv("SQS_COMMANDS_RESPONSE_URL")),
 				ReceiptHandle: msg.ReceiptHandle,
 			}
-			if _, err = s.svc.DeleteMessage(dmr); err != nil {
+			if _, err = s.sqsSvc.DeleteMessage(dmr); err != nil {
 				log.Printf("Error deleting message from queue: %s\n", err.Error())
 			}
 		}
