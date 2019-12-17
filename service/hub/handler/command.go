@@ -39,9 +39,12 @@ func (h *CmdMessageHandler) HandleMessage(msg viewmodels.MessageView) error {
 	if strings.HasPrefix(msg.Text, "/stock=") {
 		cmd := msg.Text[7:]
 		log.Printf("Sending command '%s' to StockBot...\n", cmd)
-		h.msg.Publish(msg.RoomID, cmd)
+		if err := h.msg.Publish(msg.RoomID, cmd); err != nil {
+			log.Printf("Error: %s", err)
+		}
 	}
 
+	// We always return nil because we don't want to be removed from broadcast list
 	return nil
 }
 
