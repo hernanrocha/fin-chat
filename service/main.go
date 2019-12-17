@@ -41,7 +41,7 @@ func getEnv(key, fallback string) string {
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8001
+// @host finchat-loadbalancer-1974477651.us-east-2.elb.amazonaws.com
 // @BasePath /
 
 func main() {
